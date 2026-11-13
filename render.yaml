@@ -1,0 +1,67 @@
+# ===========================================================================
+#  Конфиг для Render (render.com).
+#
+#  Создание сервиса:
+#    1. Залейте проект в репозиторий на GitHub.
+#    2. На Render: New -> Web Service -> подключите репозиторий.
+#    3. Render сам прочитает этот файл.
+#    4. Задайте секреты в Environment (см. список ниже).
+#
+#  Бот сам поднимает маленький HTTP-сервер на порту $PORT:
+#    /health - JSON со статусом, / - простая страничка.
+#  Render требует, чтобы сервис слушал порт, поэтому это обязательно.
+#
+#  ВНИМАНИЕ: бесплатный Render засыпает через 15 минут без входящих
+#  запросов. Если витрина перестала обновляться - загляните в логи,
+#  возможно сервис спит. Для постоянной работы возьмите платный тариф
+#  (от $7/мес) или другой хостинг - см. DEPLOY.md.
+# ===========================================================================
+
+services:
+  - type: web
+    name: minecraft-livecheck-bot
+    runtime: python
+    plan: free
+    region: frankfurt
+
+    # Устанавливаем зависимости перед запуском.
+    buildCommand: pip install -r requirements.txt
+
+    # Запускаем бота.
+    startCommand: python -u bot.py
+
+    # Бот отвечает на / и /health - по этому пути Render проверяет сервис.
+    healthCheckPath: /health
+    autoDeployTrigger: commit
+
+    envVars:
+      - key: PYTHONUNBUFFERED
+        value: "1"
+      - key: PYTHONIOENCODING
+        value: "utf-8"
+      - key: PORT
+        value: "10000"
+      - key: UPDATE_INTERVAL
+        value: "60"
+      - key: USE_MOTD
+        value: "true"
+      - key: USE_EMOJI
+        value: "true"
+      - key: SHOW_VERSION
+        value: "true"
+      - key: SHOW_PLAYER_LIST
+        value: "true"
+      - key: LOG_LEVEL
+        value: "INFO"
+
+      # Секреты задайте вручную в панели Render (значения не подставляются).
+      - key: BOT_TOKEN
+        sync: false
+      - key: CHANNEL_ID
+        sync: false
+      - key: GUILD_ID
+        sync: false
+      - key: SERVER_IP
+        sync: false
+      - key: ACCENT_COLOR
+        sync: false
