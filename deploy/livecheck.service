@@ -1,0 +1,56 @@
+# ===========================================================================
+#  systemd-юнит для Livecheck-бота на Linux-сервере (VPS).
+#
+#  Установка:
+#    sudo cp deploy/livecheck.service /etc/systemd/system/
+#    sudo nano /etc/systemd/system/livecheck.service   # поправить пути
+#    sudo systemctl daemon-reload
+#    sudo systemctl enable --now livecheck
+#
+#  Логи:
+#    journalctl -u livecheck -f
+# ===========================================================================
+
+[Unit]
+Description=Livecheck-бот для Minecraft-сервера (Discord)
+Documentation=https://discord.com/developers/applications
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+User=livecheck
+Group=livecheck
+WorkingDirectory=/opt/livecheck
+
+# Настройки можно держать и в файле .env рядом с ботом,
+# тогда эти строки не нужны. Раскомментируйте при необходимости:
+#Environment=BOT_TOKEN=ваш_токен
+#Environment=CHANNEL_ID=123456789012345678
+#Environment=GUILD_ID=123456789012345678
+#Environment=SERVER_IP=mc.example.com:25565
+
+ExecStart=/opt/livecheck/venv/bin/python -u /opt/livecheck/bot.py
+
+# Перезапуск при падении: подождать 10 секунд и начать заново.
+Restart=always
+RestartSec=10
+
+# Если бот падает слишком часто - остановиться, чтобы не плодить процессы.
+StartLimitIntervalSec=300
+StartLimitBurst=5
+
+# Бот не пишет в консоль - всё в журнал systemd.
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=livecheck
+
+# Безопасность: боту не нужно ничего, кроме своей папки.
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ReadWritePaths=/opt/livecheck
+
+[Install]
+WantedBy=multi-user.target
